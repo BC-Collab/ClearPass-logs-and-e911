@@ -4,7 +4,8 @@ Programs to collect logs from ClearPass via the insight database and report on V
 These directories are a set of programs to pull log information from ClearPass.
 There are two different programs that are pulling log information:
 
-1: ClearPass RADIUS text logs for security<\BR>
+1: ClearPass RADIUS text logs for security
+
 2: ClearPass RADIUS authentications to track VoIP phones.
 
 Insight Export
