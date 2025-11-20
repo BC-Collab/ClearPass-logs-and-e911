@@ -1,0 +1,33 @@
+drop table if exists clearpasslogs;
+
+create table clearpasslogs
+( timestamp datetime,
+sessionid varchar( 25 ),
+username varchar( 128 ),
+mac varchar( 20 ),
+protocol varchar( 50 ),
+service varchar( 50 ),
+authsrc varchar( 50 ),
+roles varchar( 128 ),
+profiles varchar( 255 ),
+authusername varchar( 128 ),
+cppmhost varchar( 25 ),
+ssid varchar( 50 ),
+errorcode int,
+devicecategory varchar( 128 ),
+devicefamily varchar( 128 ),
+devicename varchar( 128 ),
+hostname varchar( 128 ),
+ip varchar( 50 ),
+sponsor varchar( 50 ),
+nasip varchar( 50 ),
+nasport varchar( 128 ),
+nasid varchar( 128 ),
+ap varchar( 128 ));
+
+create unique index iclearpasslogs01 on clearpasslogs( timestamp, sessionid );
+create index iclearpasslogs02 on clearpasslogs( timestamp );
+create index iclearpasslogs03 on clearpasslogs( username );
+create index iclearpasslogs04 on clearpasslogs( authusername );
+create index iclearpasslogs05 on clearpasslogs( mac );
+create index iclearpasslogs06 on clearpasslogs( hostname );
