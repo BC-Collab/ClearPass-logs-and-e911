@@ -30,8 +30,8 @@ public class export
       boolean sendemail = false;
 
       Class.forName( "org.postgresql.Driver" );
-      String metricspass = postgresPassClass.getPassword( "bcprintdb.bc.edu", "5432", "metrics", "metrics" );
-      Connection connection = DriverManager.getConnection( "jdbc:postgresql://bcprintdb.bc.edu:5432/metrics?user=metrics&password=" + metricspass );
+      String metricspass = postgresPassClass.getPassword( "bcprintdbtest.bc.edu", "5432", "metrics", "metrics" );
+      Connection connection = DriverManager.getConnection( "jdbc:postgresql://bcprintdbtest.bc.edu:5432/metrics?user=metrics&password=" + metricspass );
       Statement statement = connection.createStatement();
 
       Timestamp starttime = null;
@@ -59,11 +59,11 @@ public class export
       { 
         emailfile = new PrintWriter( new BufferedWriter( new FileWriter( "email.eml" )));
         emailfile.println( "<HTML><Body><Table border=1 cellpadding=5 cellspacing=0>" );
-        emailfile.println( "<TR><TH colspan=6>VoIP Phones That Have Changed Switch Ports</TH></TR>" );
-        emailfile.println( "<TR><TH>MAC</TH><TH>Number of Switch Ports Seen</TH><TH>First Switch Port seen</TH><TH>Last Switch Port Seen</TH><TH>Number of Auths</TH><TH>Hostname</TH></TR>" );
+        emailfile.println( "<TR><TH colspan=7>VoIP Phones That Have Changed Switch Ports</TH></TR>" );
+        emailfile.println( "<TR><TH>MAC</TH><TH>Number of Switch Ports Seen</TH><TH>First Switch Port seen</TH><TH>Last Switch Port Seen</TH><TH>Number of Auths</TH><TH>Last Port Change</TH><TH>Hostname</TH></TR>" );
       }
 
-      ResultSet results = statement.executeQuery( "select voip_mac, location_count, previous_nas_ip, previous_nas_id, previous_nas_port, voip_ip_address, current_nas_id, current_nas_port, auth_count, voip_dns from e911 where voip_mac != '-1' order by location_count desc, voip_mac" );
+      ResultSet results = statement.executeQuery( "select voip_mac, location_count, previous_nas_ip, previous_nas_id, previous_nas_port, voip_ip_address, current_nas_id, current_nas_port, auth_count, voip_dns, change_time from e911 where voip_mac != '-1' order by location_count desc, voip_mac" );
       while ( results.next())
       {
         int x = 1;
@@ -77,6 +77,7 @@ public class export
         String current_nas_port = results.getString( x++ );
         int auth_count = results.getInt( x++ );
         String hostname = results.getString( x++ );
+        Timestamp change_time = results.getTimestamp( x++ );
 
         if ( fullreport )
           exportfile.println( "\"" + mac + "\"," + location_count + ",\"" + previous_nas_ip + ":" + previous_nas_id + ":" + previous_nas_port + "\",\"" + current_nas_ip + ":" + 
@@ -88,7 +89,7 @@ public class export
             exportfile.println( "\"" + mac + "\", " + location_count + ", \"" + previous_nas_ip + ":" + previous_nas_id + ":" + previous_nas_port + "\", \"" + current_nas_ip + ":" + 
                                current_nas_id + ":" + current_nas_port + "\", " + auth_count + ", \"" + hostname + "\"" );
             if ( sendemail ) emailfile.println( "<TR><TD>" + mac + "</TD><TD align=right>" + location_count + "</TD><TD>" + previous_nas_ip + ":" + previous_nas_id + ":" + previous_nas_port + "</TD><TD>" + 
-                             current_nas_ip + ":" + current_nas_id + ":" + current_nas_port + "</TD><TD align=right>" + auth_count + "</TD><TD>" + hostname + "</TD></TR>" );
+                             current_nas_ip + ":" + current_nas_id + ":" + current_nas_port + "</TD><TD align=right>" + auth_count + "</TD><TD>" + change_time + "</TD><TD>" + hostname + "</TD></TR>" );
           }
         }
       }
