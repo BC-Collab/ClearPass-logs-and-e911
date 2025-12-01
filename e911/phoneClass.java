@@ -11,6 +11,7 @@ public final class phoneClass
   String mac = null;
   String nasid = null;
   String nasport = null;
+  Timestamp changetime = null;
 
   public phoneClass() {};
 
@@ -29,6 +30,7 @@ public final class phoneClass
   public void count() { counter++; }
   public void NAScount() { nascounter++; }
   public void setTimestamp( Timestamp t ) { timestamp = t; }
+  public void setChangeTime( Timestamp t ) { changetime = t; }
   public void setNASid( String s ) { nasid = s; }
   public void setNASport( String s ) { nasport = s; }
 
@@ -40,4 +42,5 @@ public final class phoneClass
   public String getDNS() { return dns; }
   public String getNASid() { return nasid; }
   public String getNASport() { return nasport; }
+  public Timestamp getChangeTime() { return changetime; }
 }

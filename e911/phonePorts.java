@@ -1,7 +1,4 @@
 // phonePorts v2
-// This program reads log events from a database table
-// The resulting report is built by writing the information
-// to another database table.
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.BufferedWriter;
@@ -53,9 +50,9 @@ System.out.println( "End: " + UtilityBean.getDate( end ) + " " + UtilityBean.get
 
       HashMap phones = new HashMap();
 
-      String metricspass = postgresPassClass.getPassword( "bcprintdb.bc.edu", "5432", "metrics", "metrics" );
+      String metricspass = postgresPassClass.getPassword( "bcprintdbtest.bc.edu", "5432", "metrics", "metrics" );
       Class.forName( "org.postgresql.Driver" );
-      Connection connection = DriverManager.getConnection( "jdbc:postgresql://bcprintdb.bc.edu:5432/metrics?user=metrics&password=" + metricspass );
+      Connection connection = DriverManager.getConnection( "jdbc:postgresql://bcprintdbtest.bc.edu:5432/metrics?user=metrics&password=" + metricspass );
 
       Statement statement = connection.createStatement();
       Statement statement3 = connection.createStatement();
@@ -63,6 +60,7 @@ System.out.println( "End: " + UtilityBean.getDate( end ) + " " + UtilityBean.get
       statement.executeUpdate( "insert into e911 ( voip_mac, previous_check_in, current_check_in ) values ( '-1', '" + UtilityBean.getMysqlDate( start ) + " " + UtilityBean.getTime24( start ) + "', '" + UtilityBean.getMysqlDate( end ) + " " + UtilityBean.getTime24( end ) + "' )" );
       PreparedStatement statement2 = connection.prepareStatement( "insert into e911 ( voip_dns, voip_ip_address, voip_mac, location_count, auth_count, current_check_in, current_nas_id, current_nas_port, previous_check_in, previous_nas_id, previous_nas_ip, previous_nas_port ) values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )" );
       PreparedStatement statement4 = connection.prepareStatement( "update e911 set location_count = ?, auth_count = ?, current_check_in = ?, voip_ip_address = ?, current_nas_id = ?, current_nas_port = ? where voip_mac = ?" );
+      PreparedStatement statement5 = connection.prepareStatement( "update e911 set location_count = ?, auth_count = ?, current_check_in = ?, voip_ip_address = ?, current_nas_id = ?, current_nas_port = ?, change_time = ? where voip_mac = ?" );
 
       ResultSet results = statement.executeQuery( "select thedate, mac, hostname, nasip, nasid, nasport from clearpasslogs where profiles = '{BC-VoIP-Profile}' and thedate >= '" + UtilityBean.getMysqlDate( start ) + " " + UtilityBean.getTime24( start ) + "' and thedate < '" + UtilityBean.getMysqlDate( end ) + " " + UtilityBean.getTime24( end ) + "' order by thedate" );
       while ( results.next())
@@ -75,7 +73,8 @@ System.out.println( "End: " + UtilityBean.getDate( end ) + " " + UtilityBean.get
         String ip = results.getString( x++ );
         String nasid = results.getString( x++ );
         String nasport = results.getString( x++ );
-	if ( nasport == null ) nasport = "-";
+        if ( nasport == null ) nasport = "-";
+        Timestamp changetime = timestamp;
         if ( phones.get( mac ) == null )
         {
           phoneClass p = new phoneClass( timestamp, mac, hostname, ip, nasid, nasport );
@@ -106,6 +105,7 @@ System.out.println( "End: " + UtilityBean.getDate( end ) + " " + UtilityBean.get
 System.out.println( p.getMAC() + " (" + hostname + ") NAS change from '" + p.getNASid() + ":" + p.getNASport() + "' to '" + nasid + ":" + nasport + "' at " + timestamp );
             p.setTimestamp( timestamp );
             p.setNASid( nasid );
+            p.setChangeTime( timestamp );
             change = true;
           }
           if ( !p.getNASport().equals( nasport )) 
@@ -113,6 +113,7 @@ System.out.println( p.getMAC() + " (" + hostname + ") NAS change from '" + p.get
 System.out.println( p.getMAC() + " (" + hostname + ") NAS port change from '" + p.getNASid() + ":" + p.getNASport() + "' to '" + nasid + ":" + nasport + "' at " + timestamp );
             p.setTimestamp( timestamp );
             p.setNASport( nasport );
+            p.setChangeTime( timestamp );
             change = true;
           }
           if ( change ) p.NAScount();
@@ -125,7 +126,7 @@ System.out.println( p.getMAC() + " (" + hostname + ") NAS port change from '" + 
           if ( r3.next()) 
           {
             previouscount = r3.getInt( 1 );
-            if ( change )previouscount++;
+            if ( change ) previouscount++;
             previous_check_in = r3.getTimestamp( 2 );
             previous_voip_ip = r3.getString( 3 );
             previous_nas_id = r3.getString( 4 );
@@ -133,20 +134,36 @@ System.out.println( p.getMAC() + " (" + hostname + ") NAS port change from '" + 
           }
 
           int y = 1;
-          statement4.setInt( y++, previouscount );
-          statement4.setInt( y++, p.getCounter() );
-          statement4.setTimestamp( y++, timestamp );
-          statement4.setString( y++, ip );
-          statement4.setString( y++, nasid );
-          statement4.setString( y++, nasport );
-          statement4.setString( y++, mac );
-          statement4.executeUpdate();
+          if ( change )
+          {
+            statement5.setInt( y++, previouscount );
+            statement5.setInt( y++, p.getCounter() );
+            statement5.setTimestamp( y++, timestamp );
+            statement5.setString( y++, ip );
+            statement5.setString( y++, nasid );
+            statement5.setString( y++, nasport );
+            statement5.setTimestamp( y++, changetime ); 
+            statement5.setString( y++, mac );
+            statement5.executeUpdate();
+          }
+          else
+          {
+            statement4.setInt( y++, previouscount );
+            statement4.setInt( y++, p.getCounter() );
+            statement4.setTimestamp( y++, timestamp );
+            statement4.setString( y++, ip );
+            statement4.setString( y++, nasid );
+            statement4.setString( y++, nasport );
+            statement4.setString( y++, mac );
+            statement4.executeUpdate();
+          }
         }
       }
       statement.close();
       statement2.close();
       statement3.close();
       statement4.close();
+      statement5.close();
       connection.close();
     }
     catch ( SQLException e ) { e.printStackTrace(); }
