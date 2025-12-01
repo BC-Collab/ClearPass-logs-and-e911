@@ -11,6 +11,7 @@ current_nas_port	varchar( 10 ),
 previous_check_in	timestamp,
 previous_nas_id		varchar( 25 ),
 previous_nas_ip		varchar( 25 ),
-previous_nas_port	varchar( 10 ));
+previous_nas_port	varchar( 10 ),
+change_time		timestamp );
 
 create index ie91101 on e911 ( voip_mac );
